@@ -1,5 +1,5 @@
 def print_rangoli(size):
-    alphabet = 'abcdefghijklimnoqrstuvwxyz'
+    alphabet = 'abcdefghijklmnoqrstuvwxyz'
     c = "-".join(alphabet[size-1::-1] + alphabet[1:size])
     for i in range(size-1, 0, -1):
         front = alphabet[size-1:i:-1]
