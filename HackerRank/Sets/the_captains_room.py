@@ -1,10 +1,7 @@
 group_size = int(input())
-room_number_list = []
-for r in input().split(" "):
-    e = room_number_list.get(int(r),[])
-    e.append(int(r))
-    room_number_list[int(r)] = e
-    print(room_number_list)
-print(room_number_list)
+room_number_list = input().split(" ")
+different = set(room_number_list)
+g = {room_number_list.count(e):e for e in different}
+print(g[1])
 #print(capitain)
 
