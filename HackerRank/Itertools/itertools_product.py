@@ -7,4 +7,4 @@ B.sort()
 C = list(product(A, B))
 C.sort()
 for e in C:
-    print(e, end=" ")
+    print (e)
