@@ -6,6 +6,5 @@ A.sort()
 B.sort()
 PC = list(product(A, B))
 PC.sort()
-for elem in PC:
-    print (elem, end= " "
-    )
+for i in PC:
+    print i
