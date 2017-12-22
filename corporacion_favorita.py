@@ -50,9 +50,9 @@ def loaddata(filename,
 
 def load_train_test_set():
     # From 2013-01-01 to 2017-08-15
-    train = loaddata(DATADIR + "/train.csv", nrows=50000)
+    train = loaddata(DATADIR + "/train.csv", nrows=300000)
     # From 2017-08-16 to 2017-08-31 
-    test = loaddata(DATADIR + "/test.csv", nrows=50000)
+    test = loaddata(DATADIR + "/test.csv", nrows=300000)
     return train, test
 
 def load_stores(dtypes={'store_nbr':'int8', 'cluster': 'int8', 'city': str, 'state': str, 'type': str}):
@@ -167,18 +167,20 @@ item_nbr = tf.feature_column.categorical_column_with_hash_bucket('item_nbr', has
 base_columns = [store_type, additional, bridge, event, holiday, work_day, 
                 onpromotion, store_cluster, store_city, store_state, store_nbr, item_nbr]
 
-base_columns = [store_nbr, item_nbr, onpromotion, store_city, store_state, store_type, store_cluster]
+#base_columns = [store_nbr, item_nbr, onpromotion, store_city, store_state, store_type, store_cluster]
                 
 crossed_columns = [tf.feature_column.crossed_column([onpromotion, holiday], hash_bucket_size=4)]
 
-x = train.drop(['unit_sales', 'date'], axis = 1)
+x = train.drop(['unit_sales', 'date', 'description', 'locale'], axis = 1)
 y = train['unit_sales']
 
 model = tf.estimator.LinearRegressor(model_dir=MODELDIR, feature_columns = base_columns)
 
-input_func = tf.estimator.inputs.pandas_input_fn(x = x, y = y, batch_size = 128, num_epochs = None, shuffle = True)
-train_input_func = tf.estimator.inputs.pandas_input_fn(x = x, y = y, batch_size = 128, num_epochs = 1000, shuffle = False)
+input_func = tf.estimator.inputs.pandas_input_fn(x = x, y = y, batch_size = 32, num_epochs = None, shuffle = True)
+train_input_func = tf.estimator.inputs.pandas_input_fn(x = x, y = y, batch_size = 32, num_epochs = 1000, shuffle = False)
 #eval_input_func = tf.estimator.inputs.pandas_input_fn(x = x_eval, y = y_eval, batch_size = 8, num_epoch = 1000, shuffle = False)
 
 
 model.train(input_fn=input_func, steps = 1000)
+
+train_metrics = model.evaluate(input_fn = train_input_func, steps = 1000)
