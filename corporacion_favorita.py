@@ -55,7 +55,7 @@ def load_train_test_set():
     test = loaddata(DATADIR + "/test.csv", nrows=50000)
     return train, test
 
-def load_stores(dtypes={'store_nbr':'int8', 'cluster': 'int32', 'store_nbr': 'int8'}):
+def load_stores(dtypes={'store_nbr':'int8', 'cluster': 'int8', 'city': str, 'state': str, 'type': str}):
     data = pd.read_csv(DATADIR + "/stores.csv", dtype = dtypes)
     return data
 
@@ -116,7 +116,7 @@ def attach_holidays_in_stores(my_set, store_holidays):
     df['locale'].fillna(-1, inplace = True)
     
     df[['Holiday', 'Additional','Bridge','Event','Work Day']] = df[['Holiday', 'Additional','Bridge','Event','Work Day']].astype('int8')
-    
+    df = df.rename(index=str, columns={"Work Day": "Work_Day"})
     return df
     
 train, test = load_train_test_set()
@@ -152,33 +152,33 @@ additional = tf.feature_column.categorical_column_with_vocabulary_list('Addition
 bridge = tf.feature_column.categorical_column_with_vocabulary_list('Bridge', [0,1])
 event = tf.feature_column.categorical_column_with_vocabulary_list('Event', [0,1])
 holiday = tf.feature_column.categorical_column_with_vocabulary_list('Holiday', [0,1])
-work_day = tf.feature_column.categorical_column_with_vocabulary_list('Work Day', [0,1])
-onpromotion = tf.feature_column.categorical_column_with_vocabulary_list('onpromotion', [0,1])
+work_day = tf.feature_column.categorical_column_with_vocabulary_list('Work_Day', [0,1])
+onpromotion = tf.feature_column.categorical_column_with_vocabulary_list('onpromotion', [0,1], dtype=tf.int8)
 
-store_cluster = tf.feature_column.categorical_column_with_vocabulary_list('cluster', list(range(1,18)))
+store_cluster = tf.feature_column.categorical_column_with_vocabulary_list(key='cluster', vocabulary_list=list(range(1,18)), dtype=tf.int32)
+
 store_city = tf.feature_column.categorical_column_with_hash_bucket('city', hash_bucket_size=22)
 store_state = tf.feature_column.categorical_column_with_hash_bucket('state', hash_bucket_size=16)
-store_nbr = tf.feature_column.categorical_column_with_hash_bucket('store_nbr', hash_bucket_size=54)
-item_nbr = tf.feature_column.categorical_column_with_hash_bucket('item_nbr', hash_bucket_size=4100)
+store_nbr = tf.feature_column.categorical_column_with_hash_bucket('store_nbr', hash_bucket_size=54, dtype=tf.int8)
+item_nbr = tf.feature_column.categorical_column_with_hash_bucket('item_nbr', hash_bucket_size=4100, dtype=tf.int32)
 
 ########################################################################################################################################
 
 base_columns = [store_type, additional, bridge, event, holiday, work_day, 
                 onpromotion, store_cluster, store_city, store_state, store_nbr, item_nbr]
+
+base_columns = [store_nbr, item_nbr, onpromotion, store_city, store_state, store_type, store_cluster]
                 
 crossed_columns = [tf.feature_column.crossed_column([onpromotion, holiday], hash_bucket_size=4)]
 
 x = train.drop(['unit_sales', 'date'], axis = 1)
 y = train['unit_sales']
 
-model = tf.estimator.LinearClassifier(model_dir=MODELDIR, feature_columns = base_columns + crossed_columns)
+model = tf.estimator.LinearRegressor(model_dir=MODELDIR, feature_columns = base_columns)
 
-input_func = tf.estimator.inputs.pandas_input_fn(x = x, y = y, batch_size = 8, num_epochs = None, shuffle = True)
-train_input_func = tf.estimator.inputs.pandas_input_fn(x = x, y = y, batch_size = 8, num_epochs = 1000, shuffle = False)
+input_func = tf.estimator.inputs.pandas_input_fn(x = x, y = y, batch_size = 128, num_epochs = None, shuffle = True)
+train_input_func = tf.estimator.inputs.pandas_input_fn(x = x, y = y, batch_size = 128, num_epochs = 1000, shuffle = False)
 #eval_input_func = tf.estimator.inputs.pandas_input_fn(x = x_eval, y = y_eval, batch_size = 8, num_epoch = 1000, shuffle = False)
 
 
 model.train(input_fn=input_func, steps = 1000)
-
-
-
