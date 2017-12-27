@@ -5,6 +5,16 @@ Created on Sat Dec 23 21:01:45 2017
 
 @author: FPCarneiro
 """
+#years = train[['id', 'year']].groupby(['year'])['id'].max().to_frame('max')
+train_distribution = {
+2013: (0, 16322662, 16322661),
+2014: (16322662, 22271602, 38594263),
+2015: (38594264, 27864644, 66458907),
+2016: (66458908, 35229871, 101688778),
+2017: (101688779, 23808261, 125497039)
+}
+
+dt = {'id':'uint32', 'item_nbr':'int32', 'store_nbr':'int8', 'unit_sales':'float32'}
 
 import pandas as pd
 
@@ -29,28 +39,41 @@ def process_holidays(holidays):
     return holidays
 
 
-def loaddata(filename, 
-             dtypes={'id':'uint32', 'item_nbr':'int32', 'store_nbr':'int8', 'unit_sales':'float32'}, 
-             index_column=None, nrows=None, skiprows=None):
-    
-    data = pd.read_csv(filename, parse_dates=['date'], 
-                                     dtype=dtypes, nrows=nrows, index_col=index_column, skiprows=skiprows)
-    
+def read_test(dtypes=dt, index_column=['id']):
+    data = pd.read_csv(DATADIR + "/test.csv", parse_dates=['date'], dtype=dtypes, index_col=index_column)
+    return data
+
+def treat_onpromotion(my_df):
+    data = my_df
     data['onpromotion'].fillna(0, inplace = True)
     data['onpromotion'] = data['onpromotion'].astype('int8')
-    
+    return data
+
+def add_date_columns(my_df):
+    data = my_df
     data['year'] = data['date'].dt.year
     data['month'] = data['date'].dt.month
     data['day'] = data['date'].dt.day
     data['dow'] = data['date'].dt.dayofweek
-    
     return data
 
-def load_train_test_set():
+def read_train_by_year(year, dtypes=dt, index_column=['id']):
+    distribution = train_distribution[year]
+    skip = range(1, distribution[0]+1)
+    nr = distribution[1]
+    data = pd.read_csv(DATADIR + "/train.csv", parse_dates=['date'], 
+                                     dtype=dtypes, nrows=nr, index_col=index_column, skiprows=skip)
+    return data
+
+def load_train_test_set(train_year=2017):
     # From 2013-01-01 to 2017-08-15
-    train = loaddata(DATADIR + "/train.csv", skiprows=range(1, 86672217), index_column=['id'])
+    train = read_train_by_year(train_year)
+    train = treat_onpromotion(train)
+    train = add_date_columns(train)
     # From 2017-08-16 to 2017-08-31 
-    test = loaddata(DATADIR + "/test.csv")
+    test = read_test()
+    test = treat_onpromotion(test)
+    test = add_date_columns(test)
     return train, test
 
 def load_stores(dtypes={'store_nbr':'int8', 'cluster': 'int8', 'city': str, 'state': str, 'type': str}):
