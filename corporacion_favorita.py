@@ -15,7 +15,52 @@ import tensorflow as tf
 import preprocessing as pp
 import train_tensor_flow as ttf
 
-train, test, stores, holidays_events, items = pp.load_all()
+import imp
+
+imp.reload(pp)
+
+#train, test, stores, holidays_events, items = pp.load_all()
+train, test = pp.load_train_test_set(train_year=2017)
+train = pp.adjust_unit_sales(train)
+
+#train = train.loc[train.date>=pd.datetime(2017,6,1)]
+
+ma_dw = pp.get_calculated_column(train[['item_nbr','store_nbr','dow','unit_sales']], 
+                                       group_by = ['item_nbr','store_nbr','dow'], target_column = 'unit_sales',
+                                        new_column_name = 'madw').reset_index()
+                                        
+ma_wk = pp.get_calculated_column(ma_dw[['item_nbr','store_nbr','madw']], 
+                                       group_by = ['store_nbr', 'item_nbr'], target_column = 'madw',
+                                        new_column_name = 'mawk').reset_index()                                        
+
+train.drop('dow', 1, inplace=True)
+ 
+train = pp.fullfill_dataset(train)
+lastdate = train.iloc[train.shape[0]-1].date
+        
+ma_is = pp.get_calculated_column(train[['item_nbr','store_nbr','unit_sales']], 
+                                       group_by = ['item_nbr','store_nbr'], target_column = 'unit_sales', new_column_name = 'mais')
+
+for i in [112,56,28,14,7,3,1]:
+    ma_is = ma_is.join(pp.get_mean(train, lastdate, i), how='left')
+
+ma_is['mais'] = ma_is.median(axis=1)
+ma_is.reset_index(inplace = True)
+ma_is.drop(list(ma_is.columns.values)[3:],1,inplace=True)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 stores_holidays = pp.consolidate_holidays(stores, holidays_events)
 

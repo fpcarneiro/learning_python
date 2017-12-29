@@ -2,7 +2,6 @@
 # -*- coding: utf-8 -*-
 """
 Created on Sat Dec 23 21:01:45 2017
-
 @author: FPCarneiro
 """
 #years = train[['id', 'year']].groupby(['year'])['id'].max().to_frame('max')
@@ -17,6 +16,7 @@ train_distribution = {
 dt = {'id':'uint32', 'item_nbr':'int32', 'store_nbr':'int8', 'unit_sales':'float32'}
 
 import pandas as pd
+from datetime import timedelta
 
 DATADIR = "input/"
 
@@ -164,3 +164,24 @@ def load_all():
     #sample_submission = pd.read_csv("input/sample_submission.csv", nrows=50)
     
     return train, test, stores, holidays_events, items
+    
+def get_calculated_column(dataset, group_by = ['item_nbr','store_nbr'], target_column = 'unit_sales', func = '', new_column_name = 'mais'):
+    return(dataset.groupby(group_by)[target_column].mean().to_frame(new_column_name))
+
+def fullfill_dataset(dataset):
+    data = dataset
+    u_dates = data.date.unique()
+    u_stores = data.store_nbr.unique()
+    u_items = data.item_nbr.unique()
+    dataset.set_index(['date', 'store_nbr', 'item_nbr'], inplace=True)
+    data = dataset.reindex(pd.MultiIndex.from_product((u_dates, u_stores, u_items), 
+                                                         names=['date','store_nbr','item_nbr'])).reset_index()
+    data.loc[:, 'unit_sales'].fillna(0, inplace=True) # fill NaNs
+    return data
+
+def get_mean(dataset, lastdate, tdelta):
+    tmp = dataset[dataset.date > lastdate-timedelta(int(tdelta))]
+#    tmpg = tmp.groupby(['item_nbr','store_nbr'])['unit_sales'].mean().to_frame('mais'+str(i))
+    tmpg = get_calculated_column(tmp, group_by = ['item_nbr','store_nbr'], target_column = 'unit_sales', 
+                                 func = '', new_column_name = 'mais'+str(tdelta))
+    return tmpg
