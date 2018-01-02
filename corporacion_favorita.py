@@ -16,18 +16,15 @@ import preprocessing as pp
 import train_tensor_flow as ttf
 
 import imp
-
 imp.reload(pp)
 
-#train, test, stores, holidays_events, items = pp.load_all()
 train, test = pp.load_train_test_set(train_year=2017)
 train = pp.adjust_unit_sales(train)
 
 #train = train.loc[train.date>=pd.datetime(2017,6,1)]
 
 ma_dw = pp.get_calculated_column(train[['item_nbr','store_nbr','dow','unit_sales']], 
-                                       group_by = ['item_nbr','store_nbr','dow'], target_column = 'unit_sales',
-                                        new_column_name = 'madw').reset_index()
+                                       group_by = ['item_nbr','store_nbr','dow'], target_column = 'unit_sales', new_column_name = 'madw').reset_index()
                                         
 ma_wk = pp.get_calculated_column(ma_dw[['item_nbr','store_nbr','madw']], 
                                        group_by = ['store_nbr', 'item_nbr'], target_column = 'madw',
@@ -47,6 +44,23 @@ for i in [112,56,28,14,7,3,1]:
 ma_is['mais'] = ma_is.median(axis=1)
 ma_is.reset_index(inplace = True)
 ma_is.drop(list(ma_is.columns.values)[3:],1,inplace=True)
+
+test = pd.merge(test, ma_is, how='left', on=['item_nbr','store_nbr'])
+test = pd.merge(test, ma_wk, how='left', on=['item_nbr','store_nbr'])
+test = pd.merge(test, ma_dw, how='left', on=['item_nbr','store_nbr','dow'])
+
+
+test['unit_sales'] = test.mais 
+pos_idx = test['mawk'] > 0
+test_pos = test.loc[pos_idx]
+
+test.loc[pos_idx, 'unit_sales'] = test_pos['mais'] * test_pos['madw'] / test_pos['mawk']
+test.loc[:, "unit_sales"].fillna(0, inplace=True)
+test['unit_sales'] = test['unit_sales'].apply(pd.np.expm1)
+
+test.loc[test['onpromotion'] == True, 'unit_sales'] *= 1.5
+
+test[['id','unit_sales']].to_csv('ma8dwof.csv.gz', index=False, float_format='%.3f', compression='gzip')
 
 
 

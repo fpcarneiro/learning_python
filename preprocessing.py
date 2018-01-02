@@ -39,7 +39,7 @@ def process_holidays(holidays):
     return holidays
 
 
-def read_test(dtypes=dt, index_column=['id']):
+def read_test(dtypes=dt, index_column = None):
     data = pd.read_csv(DATADIR + "/test.csv", parse_dates=['date'], dtype=dtypes, index_col=index_column)
     return data
 
