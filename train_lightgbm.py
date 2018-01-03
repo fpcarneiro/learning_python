@@ -108,7 +108,7 @@ def prepare_dataset(t2017, is_train=True):
 print("Preparing dataset...")
 t2017 = date(2017, 5, 31)
 X_l, y_l = [], []
-for i in range(6):
+for i in range(1):
     delta = timedelta(days=7 * i)
     print(delta)
     print(t2017 + delta)

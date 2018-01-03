@@ -165,7 +165,7 @@ def load_all():
     
     return train, test, stores, holidays_events, items
     
-def get_calculated_column(dataset, group_by = ['item_nbr','store_nbr'], target_column = 'unit_sales', func = '', new_column_name = 'mais'):
+def get_calculated_column(dataset, group_by = ['store_nbr', 'item_nbr'], target_column = 'unit_sales', func = '', new_column_name = 'mais'):
     return(dataset.groupby(group_by)[target_column].mean().to_frame(new_column_name))
 
 def fullfill_dataset(dataset):
@@ -179,9 +179,8 @@ def fullfill_dataset(dataset):
     data.loc[:, 'unit_sales'].fillna(0, inplace=True) # fill NaNs
     return data
 
-def get_mean(dataset, lastdate, tdelta):
-    tmp = dataset[dataset.date > lastdate-timedelta(int(tdelta))]
+def get_mean(dataset, reference_date, tdelta):
+    tmp = dataset[dataset.date > reference_date-timedelta(int(tdelta))]
 #    tmpg = tmp.groupby(['item_nbr','store_nbr'])['unit_sales'].mean().to_frame('mais'+str(i))
-    tmpg = get_calculated_column(tmp, group_by = ['item_nbr','store_nbr'], target_column = 'unit_sales', 
-                                 func = '', new_column_name = 'mais'+str(tdelta))
+    tmpg = get_calculated_column(tmp, func = '', new_column_name = 'mais'+str(tdelta))
     return tmpg
