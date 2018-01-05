@@ -184,3 +184,10 @@ def get_mean(dataset, reference_date, tdelta):
 #    tmpg = tmp.groupby(['item_nbr','store_nbr'])['unit_sales'].mean().to_frame('mais'+str(i))
     tmpg = get_calculated_column(tmp, func = '', new_column_name = 'mais'+str(tdelta))
     return tmpg
+    
+def get_interval2(dataset, interval):
+#    train.loc[(slice(None), slice(None), [t2017, t2017 + delta]),:]
+    return (dataset.loc[(slice(None), slice(None), interval),:])
+    
+def get_interval(ini, periods, freq='D'):
+    return (pd.date_range(start=ini, periods=periods, freq=freq))

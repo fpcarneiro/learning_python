@@ -32,7 +32,19 @@ ma_wk = pp.get_calculated_column(ma_dw[['item_nbr','store_nbr','madw']], target_
 train = train.set_index(["store_nbr", "item_nbr", "date"])
 train = train.sort_index()
 #train = train.reset_index()
+
+
+datas = train.index.get_level_values(-1).unique()
+datas = datas.sort_values()
+
+stores = train.index.get_level_values([0,1]).unique()
+
 grouped = train.groupby(level=['store_nbr', 'item_nbr'])
+
+
+
+dft[datetime(2013, 1, 1):datetime(2013,2,28)]
+
 
 train.drop('dow', 1, inplace=True)
  
@@ -131,3 +143,5 @@ test[['id','unit_sales']].to_csv('sub0.csv.gz', index=False, float_format='%.3f'
 test.loc[test['onpromotion'] == True, 'unit_sales'] *= 1.5  
         
 test[['id','unit_sales']].to_csv('sub1.csv.gz', index=False, float_format='%.3f', compression='gzip')
+
+
