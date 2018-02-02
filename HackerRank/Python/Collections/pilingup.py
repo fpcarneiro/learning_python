@@ -27,10 +27,12 @@ def sayit2(seq):
     return max_number, seq, response
 
 if __name__ == "__main__":
+    rows_of_cubes = []
     for tc in range(int(input())):
         s = int(input())
-        row_of_cubes = input()
-        response = sayit(row_of_cubes)
+        rows_of_cubes.append(input())
+    for e in rows_of_cubes:
+        response = sayit(e)
         if response:
             print("Yes")
         else:
